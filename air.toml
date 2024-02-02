@@ -1,0 +1,25 @@
+# air.toml
+root = "."  # Project root directory (default is .)
+tmp_dir = "tmp"  # Temp directory (default is $TMPDIR or /tmp)
+build_dir = "tmp/build"  # Build directory (default is tmp/air)
+binary = "./tmp/build/myapp"  # Path to binary (default is ./tmp/air)
+
+[build]
+cmd = "go build -o ./tmp/build/myapp"  # Build command
+
+[[watcher]]
+dirs = ["."]  # Watching directories
+exclude_dirs = []  # Excluding directories
+files = [  # Watching files
+  "main.go",
+  "handlers/*.go",
+  "models/*.go",
+]
+exclude_files = []  # Excluding files
+build_delay = 1000  # Delay before the build starts
+binary_delay = 1000  # Delay before the binary is restarted
+log = "main.go"  # Log file name
+
+[log]
+mode = "file"  # Log mode [file, stdout, stderr]
+prefix = "air"  # Log prefix

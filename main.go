@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,13 +20,17 @@ func newTemplate() *Template {
 	}
 }
 
+var id = 0
 type Contact struct {
+	Id int
 	Name string 
 	Email string 
 }
 
 func newContact(name, email string) Contact {
+	id++ 
 	return Contact{
+		Id : id,
 		Name: name,
 		Email: email,
 	}
@@ -34,6 +40,15 @@ type Contacts []Contact // type alias for contact slice
 
 type Data struct {
 	Contacts Contacts
+}
+
+func (d *Data) indexOf(id int) int {
+	for i, contact := range d.Contacts {
+		if contact.Id == id {
+			return i
+		}
+	}
+	return -1
 }
 
 func (d *Data) hasEmail(email string) bool {
@@ -88,6 +103,9 @@ func main() {
 
 	x.LoadHTMLGlob("views/*.html")
 
+	x.Static("/images", "images")
+	x.Static("/css", "css")
+
 	// Define routes
 	x.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index", page)
@@ -110,10 +128,28 @@ func main() {
 		contact := newContact(name, email)
 		page.Data.Contacts = append(page.Data.Contacts, contact)
 
-		// TODO: Save the contact to the database
-
 		c.HTML(http.StatusOK, "form", newFormData())
 		c.HTML(http.StatusOK, "oob-contact", contact)
+	})
+
+	x.DELETE("/contacts/:id", func(c *gin.Context) {
+		time.Sleep(3 * time.Second)
+		idStr := c.Param("id")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+			return
+		}
+
+		index := page.Data.indexOf(id)
+		if index == -1 {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Contact not found"})
+			return
+		}
+
+		page.Data.Contacts = append(page.Data.Contacts[:index], page.Data.Contacts[index+1:]...)
+
+		c.Status(http.StatusOK)
 	})
 
 	// Run the server
